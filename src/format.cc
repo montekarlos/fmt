@@ -5,6 +5,23 @@
 //
 // For the license information refer to format.h.
 
+// See https://github.com/fmtlib/fmt/issues/1617 for more context on using
+// libfmt on bare metal
+
+// Be defining FMT_STATIC_THOUSANDS_SEPARATOR we avoid #including <locale>.
+// Including results in large increase of memory usages (~150kB RAM, ~kB ROM)
+// and we just don't need the locale aware separator on an embedded micro
+#define FMT_STATIC_THOUSANDS_SEPARATOR '.'
+
+// Disable support for formatting/parsing long doubles but maintain support
+// for floats and doubles for now. Reduces ROM usage
+#define FMT_USE_FLOAT 1
+#define FMT_USE_DOUBLE 1
+#define FMT_USE_LONG_DOUBLE 0
+
+// Disable exceptions. Reduces ROM usage
+#define FMT_THROW panic
+
 #include "fmt/format-inl.h"
 
 FMT_BEGIN_NAMESPACE
@@ -27,21 +44,6 @@ template FMT_API auto thousands_sep_impl(locale_ref)
 template FMT_API auto decimal_point_impl(locale_ref) -> char;
 
 template FMT_API void buffer<char>::append(const char*, const char*);
-
-// DEPRECATED!
-// There is no correspondent extern template in format.h because of
-// incompatibility between clang and gcc (#2377).
-template FMT_API void vformat_to(buffer<char>&, string_view,
-                                 basic_format_args<FMT_BUFFER_CONTEXT(char)>,
-                                 locale_ref);
-
-// Explicit instantiations for wchar_t.
-
-template FMT_API auto thousands_sep_impl(locale_ref)
-    -> thousands_sep_result<wchar_t>;
-template FMT_API auto decimal_point_impl(locale_ref) -> wchar_t;
-
-template FMT_API void buffer<wchar_t>::append(const wchar_t*, const wchar_t*);
 
 }  // namespace detail
 FMT_END_NAMESPACE
